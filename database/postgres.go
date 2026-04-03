@@ -12,7 +12,7 @@ import (
 var DB *gorm.DB
 
 func Connect() {
-	// Настройки подключения
+
 	dsn := "host=localhost user=postgres password=123456 dbname=mydb port=5432 sslmode=disable"
 	if os.Getenv("DB_DSN") != "" {
 		dsn = os.Getenv("DB_DSN")
