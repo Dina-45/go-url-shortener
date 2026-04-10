@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 
+	"go-url-shortener/models"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -12,7 +14,6 @@ import (
 var DB *gorm.DB
 
 func Connect() {
-	// Настройки подключения
 	dsn := "host=localhost user=postgres password=123456 dbname=mydb port=5432 sslmode=disable"
 	if os.Getenv("DB_DSN") != "" {
 		dsn = os.Getenv("DB_DSN")
@@ -25,4 +26,8 @@ func Connect() {
 
 	fmt.Println("Connected to database!")
 	DB = db
+
+	if err := DB.AutoMigrate(&models.URL{}, &models.User{}); err != nil {
+		log.Fatal("AutoMigrate failed:", err)
+	}
 }

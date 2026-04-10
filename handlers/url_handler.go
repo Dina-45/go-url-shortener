@@ -8,14 +8,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GET /urls
 func GetAllURLs(c *gin.Context) {
 	var urls []models.URL
 	database.DB.Find(&urls)
 	c.JSON(http.StatusOK, urls)
 }
 
-// GET /urls/:id
 func GetURLByID(c *gin.Context) {
 	id := c.Param("id")
 	var url models.URL
@@ -26,7 +24,6 @@ func GetURLByID(c *gin.Context) {
 	c.JSON(http.StatusOK, url)
 }
 
-// POST /urls
 func CreateURL(c *gin.Context) {
 	var url models.URL
 	if err := c.ShouldBindJSON(&url); err != nil {
@@ -37,7 +34,6 @@ func CreateURL(c *gin.Context) {
 	c.JSON(http.StatusCreated, url)
 }
 
-// PUT /urls/:id
 func UpdateURL(c *gin.Context) {
 	id := c.Param("id")
 	var url models.URL
@@ -54,7 +50,6 @@ func UpdateURL(c *gin.Context) {
 	c.JSON(http.StatusOK, url)
 }
 
-// DELETE /urls/:id
 func DeleteURL(c *gin.Context) {
 	id := c.Param("id")
 	var url models.URL
@@ -66,7 +61,6 @@ func DeleteURL(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "URL deleted"})
 }
 
-// GET /short/:code
 func RedirectShortURL(c *gin.Context) {
 	code := c.Param("code")
 	var url models.URL
@@ -77,7 +71,6 @@ func RedirectShortURL(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"original_url": url.OriginalURL})
 }
 
-// GET /count/:id
 func GetClicks(c *gin.Context) {
 	id := c.Param("id")
 	var url models.URL
@@ -85,10 +78,9 @@ func GetClicks(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "URL not found"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"clicks": 0}) // пока заглушка
+	c.JSON(http.StatusOK, gin.H{"clicks": 0})
 }
 
-// POST /urls/bulk
 func CreateBulkURLs(c *gin.Context) {
 	var inputs []models.URL
 	if err := c.ShouldBindJSON(&inputs); err != nil {
@@ -101,13 +93,11 @@ func CreateBulkURLs(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Bulk URLs created"})
 }
 
-// DELETE /urls
 func DeleteAllURLs(c *gin.Context) {
 	database.DB.Where("1 = 1").Delete(&models.URL{})
 	c.JSON(http.StatusOK, gin.H{"message": "All URLs deleted"})
 }
 
-// GET /stats
 func GetStats(c *gin.Context) {
 	var count int64
 	database.DB.Model(&models.URL{}).Count(&count)

@@ -10,10 +10,21 @@ import (
 
 func main() {
 	database.Connect()
-	database.DB.AutoMigrate(&models.URL{})
+	database.DB.AutoMigrate(&models.URL{}, &models.User{})
 
 	r := gin.Default()
 
+	// Auth routes (публичные)
+	r.POST("/register", handlers.Register)
+	r.POST("/login", handlers.Login)
+
+	// Protected dashboard
+	r.GET("/dashboard", handlers.AuthMiddleware(), func(c *gin.Context) {
+		user, _ := c.Get("username")
+		c.JSON(200, gin.H{"message": "Welcome, " + user.(string)})
+	})
+
+	// Старые роуты (без изменений)
 	r.GET("/urls", handlers.GetAllURLs)
 	r.GET("/urls/:id", handlers.GetURLByID)
 	r.POST("/urls", handlers.CreateURL)
@@ -24,7 +35,6 @@ func main() {
 	r.POST("/urls/bulk", handlers.CreateBulkURLs)
 	r.DELETE("/urls", handlers.DeleteAllURLs)
 	r.GET("/stats", handlers.GetStats)
-
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "pong"})
 	})
