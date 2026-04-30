@@ -7,4 +7,4 @@ migrate-down:
 	migrate -path migrations -database "$(DB_URL)" down
 
 migrate-create:
-	migrate create -ext sql -dir migrationsmake migrate-up -seq $(name)
+	migrate create -ext sql -dir migrations -seq $(name)

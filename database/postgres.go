@@ -5,8 +5,6 @@ import (
 	"log"
 	"os"
 
-	"go-url-shortener/models"
-
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -26,8 +24,4 @@ func Connect() {
 
 	fmt.Println("Connected to database!")
 	DB = db
-
-	if err := DB.AutoMigrate(&models.URL{}, &models.User{}); err != nil {
-		log.Fatal("AutoMigrate failed:", err)
-	}
 }

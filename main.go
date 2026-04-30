@@ -23,8 +23,6 @@ func main() {
 		user, _ := c.Get("username")
 		c.JSON(200, gin.H{"message": "Welcome, " + user.(string)})
 	})
-
-	// Старые роуты (без изменений)
 	r.GET("/urls", handlers.GetAllURLs)
 	r.GET("/urls/:id", handlers.GetURLByID)
 	r.POST("/urls", handlers.CreateURL)
@@ -35,6 +33,8 @@ func main() {
 	r.POST("/urls/bulk", handlers.CreateBulkURLs)
 	r.DELETE("/urls", handlers.DeleteAllURLs)
 	r.GET("/stats", handlers.GetStats)
+	r.GET("/health/all", handlers.CheckAllURLsHealth)
+	r.GET("/health/:id", handlers.CheckURLHealth)
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "pong"})
 	})

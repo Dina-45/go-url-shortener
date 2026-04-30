@@ -6,4 +6,5 @@ type URL struct {
 	gorm.Model
 	OriginalURL string `json:"original_url"`
 	ShortCode   string `json:"short_code"`
+	IsAlive     *bool  `json:"is_alive"`
 }
