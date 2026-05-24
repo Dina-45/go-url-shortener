@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shortify — URL Shortener</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #13131a;
+            --border: #2a2a3a;
+            --accent: #7c6af7;
+            --accent2: #f76a8c;
+            --text: #e8e8f0;
+            --muted: #6b6b80;
+            --success: #4ade80;
+            --danger: #f87171;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; }
+
+        #auth-screen {
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh; padding: 2rem;
+            background: radial-gradient(ellipse at 20% 50%, #1a1040 0%, var(--bg) 60%),
+            radial-gradient(ellipse at 80% 20%, #1a0a20 0%, transparent 50%);
+        }
+        .auth-box { width: 100%; max-width: 420px; }
+        .auth-logo {
+            font-size: 2.5rem; font-weight: 800; letter-spacing: -2px; margin-bottom: 2.5rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .auth-tabs { display: flex; margin-bottom: 2rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .auth-tab { flex: 1; padding: 0.75rem; background: transparent; border: none; color: var(--muted); cursor: pointer; font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; transition: all 0.2s; }
+        .auth-tab.active { background: var(--accent); color: white; }
+        .field { margin-bottom: 1.25rem; }
+        .field label { display: block; font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+        .field input { width: 100%; padding: 0.875rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Space Mono', monospace; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+        .field input:focus { border-color: var(--accent); }
+        .btn { width: 100%; padding: 0.875rem; background: var(--accent); color: white; border: none; border-radius: 8px; font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn.danger { background: var(--danger); }
+        .btn.success { background: #22c55e; }
+        .btn.sm { width: auto; padding: 0.4rem 0.8rem; font-size: 0.75rem; }
+        .msg { margin-top: 1rem; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; font-family: 'Space Mono', monospace; display: none; }
+        .msg.err { background: #3a1a1a; color: var(--danger); border: 1px solid #5a2a2a; }
+        .msg.ok { background: #1a3a2a; color: var(--success); border: 1px solid #2a5a3a; }
+
+        #app-screen { display: none; }
+        header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 2rem; border-bottom: 1px solid var(--border); background: var(--surface); }
+        .logo { font-size: 1.5rem; font-weight: 800; letter-spacing: -1px; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .user-info { display: flex; align-items: center; gap: 1rem; font-size: 0.85rem; color: var(--muted); }
+        .logout-btn { background: none; border: 1px solid var(--border); color: var(--muted); padding: 0.4rem 0.9rem; border-radius: 6px; cursor: pointer; font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; transition: all 0.2s; }
+        .logout-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+        main { max-width: 960px; margin: 0 auto; padding: 2rem; }
+
+        .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; }
+        .stat-value { font-size: 2rem; font-weight: 800; font-family: 'Space Mono', monospace; color: var(--accent); }
+        .stat-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-top: 0.25rem; }
+
+        .create-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+        .create-card h2 { font-size: 1rem; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 1.25rem; color: var(--muted); text-transform: uppercase; }
+        .create-row { display: grid; grid-template-columns: 1fr 160px 100px auto; gap: 0.75rem; align-items: end; }
+        .create-row .field { margin-bottom: 0; }
+        .create-row .btn { width: auto; padding: 0.875rem 1.5rem; white-space: nowrap; }
+
+        .health-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+        .health-card h2 { font-size: 1rem; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 1.25rem; color: var(--muted); text-transform: uppercase; }
+        .health-row { display: flex; gap: 0.75rem; align-items: center; }
+        .health-row .btn { width: auto; padding: 0.75rem 1.5rem; }
+        .health-results { margin-top: 1rem; }
+        .health-item { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .health-item:last-child { border-bottom: none; }
+        .health-url { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 500px; }
+
+        .urls-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .urls-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+        .urls-header h2 { font-size: 1rem; font-weight: 700; letter-spacing: 0.5px; color: var(--muted); text-transform: uppercase; }
+        .url-list { list-style: none; }
+        .url-item { display: grid; grid-template-columns: 1fr 150px 70px 80px 110px; align-items: center; gap: 1rem; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+        .url-item:last-child { border-bottom: none; }
+        .url-item:hover { background: rgba(124, 106, 247, 0.05); }
+        .url-original { font-size: 0.85rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .url-short a { font-family: 'Space Mono', monospace; font-size: 0.8rem; color: var(--accent); text-decoration: none; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .url-short a:hover { text-decoration: underline; }
+        .url-clicks { font-family: 'Space Mono', monospace; font-size: 0.85rem; color: var(--accent2); text-align: center; }
+        .url-status { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; }
+        .url-status.alive { color: var(--success); }
+        .url-status.dead { color: var(--danger); }
+        .url-status.expired { color: var(--muted); }
+        .url-status.unknown { color: var(--muted); }
+        .url-actions { display: flex; gap: 0.4rem; justify-content: flex-end; }
+        .icon-btn { background: none; border: 1px solid var(--border); color: var(--muted); padding: 0.3rem 0.5rem; border-radius: 5px; cursor: pointer; font-size: 0.75rem; transition: all 0.15s; }
+        .icon-btn.health-btn:hover { border-color: var(--success); color: var(--success); }
+        .icon-btn.delete:hover { border-color: var(--danger); color: var(--danger); }
+        .icon-btn.copy:hover { border-color: var(--accent); color: var(--accent); }
+
+        .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+        .badge.alive { background: rgba(74,222,128,0.15); color: var(--success); }
+        .badge.dead { background: rgba(248,113,113,0.15); color: var(--danger); }
+
+        .empty-state { padding: 3rem; text-align: center; color: var(--muted); font-size: 0.9rem; }
+
+        #toast { position: fixed; bottom: 2rem; right: 2rem; padding: 0.75rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; font-family: 'Space Mono', monospace; transform: translateY(100px); opacity: 0; transition: all 0.3s; z-index: 100; }
+        #toast.show { transform: translateY(0); opacity: 1; }
+        #toast.ok { border-color: var(--success); color: var(--success); }
+        #toast.err { border-color: var(--danger); color: var(--danger); }
+
+        @media (max-width: 700px) {
+            .create-row { grid-template-columns: 1fr; }
+            .url-item { grid-template-columns: 1fr 1fr; }
+            .stats-bar { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="auth-screen">
+    <div class="auth-box">
+        <div class="auth-logo">Shortify</div>
+        <div class="auth-tabs">
+            <button class="auth-tab active" onclick="switchTab('login')">Login</button>
+            <button class="auth-tab" onclick="switchTab('register')">Register</button>
+        </div>
+        <div id="login-form">
+            <div class="field"><label>Username</label><input type="text" id="login-username" placeholder="username" /></div>
+            <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••" /></div>
+            <button class="btn" onclick="doLogin()">Login</button>
+            <div class="msg" id="login-msg"></div>
+        </div>
+        <div id="register-form" style="display:none">
+            <div class="field"><label>Username</label><input type="text" id="reg-username" placeholder="username" /></div>
+            <div class="field"><label>Password</label><input type="password" id="reg-password" placeholder="••••••••" /></div>
+            <button class="btn" onclick="doRegister()">Register</button>
+            <div class="msg" id="reg-msg"></div>
+        </div>
+    </div>
+</div>
+
+<div id="app-screen">
+    <header>
+        <div class="logo">Shortify</div>
+        <div class="user-info">
+            <span id="header-username"></span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </header>
+    <main>
+        <div class="stats-bar">
+            <div class="stat-card"><div class="stat-value" id="stat-total">—</div><div class="stat-label">Total URLs</div></div>
+            <div class="stat-card"><div class="stat-value" id="stat-clicks">—</div><div class="stat-label">Total Clicks</div></div>
+            <div class="stat-card"><div class="stat-value" id="stat-expired">—</div><div class="stat-label">Expired</div></div>
+        </div>
+
+        <div class="create-card">
+            <h2>Create Short URL</h2>
+            <div class="create-row">
+                <div class="field"><label>Original URL</label><input type="url" id="new-original" placeholder="https://example.com/very/long/url" /></div>
+                <div class="field"><label>Custom code (opt.)</label><input type="text" id="new-code" placeholder="my-link" /></div>
+                <div class="field"><label>Expires (h)</label><input type="number" id="new-expires" placeholder="24" min="1" /></div>
+                <button class="btn" onclick="createURL()">+ Create</button>
+            </div>
+        </div>
+
+        <div class="health-card">
+            <h2>🩺 Health Check</h2>
+            <div class="health-row">
+                <button class="btn success" onclick="checkAllHealth()">Check All URLs</button>
+                <span style="font-size:0.8rem;color:var(--muted)" id="health-status"></span>
+            </div>
+            <div class="health-results" id="health-results"></div>
+        </div>
+
+        <div class="urls-card">
+            <div class="urls-header">
+                <h2>My URLs</h2>
+                <button class="btn danger sm" onclick="deleteAll()">Delete All</button>
+            </div>
+            <ul class="url-list" id="url-list"><li class="empty-state">Loading...</li></ul>
+        </div>
+    </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+    const API = 'http://localhost:8080';
+    let token = localStorage.getItem('token');
+    let username = localStorage.getItem('username');
+    if (token) showApp();
+
+    function switchTab(tab) {
+        document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (tab==='login'?i===0:i===1)));
+        document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
+        document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
+    }
+
+    async function doLogin() {
+        const u = document.getElementById('login-username').value.trim();
+        const p = document.getElementById('login-password').value;
+        const msg = document.getElementById('login-msg');
+        try {
+            const res = await fetch(`${API}/login`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username:u, password:p}) });
+            const data = await res.json();
+            if (!res.ok) { showMsg(msg, data.error || 'Error', 'err'); return; }
+            token = data.token; username = data.username;
+            localStorage.setItem('token', token); localStorage.setItem('username', username);
+            showApp();
+        } catch(e) { showMsg(msg, 'Server unavailable', 'err'); }
+    }
+
+    async function doRegister() {
+        const u = document.getElementById('reg-username').value.trim();
+        const p = document.getElementById('reg-password').value;
+        const msg = document.getElementById('reg-msg');
+        try {
+            const res = await fetch(`${API}/register`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username:u, password:p}) });
+            const data = await res.json();
+            if (!res.ok) { showMsg(msg, data.error || 'Error', 'err'); return; }
+            showMsg(msg, 'Success! Please login', 'ok');
+            setTimeout(() => switchTab('login'), 1500);
+        } catch(e) { showMsg(msg, 'Server unavailable', 'err'); }
+    }
+
+    function logout() {
+        token = null; username = null;
+        localStorage.removeItem('token'); localStorage.removeItem('username');
+        document.getElementById('app-screen').style.display = 'none';
+        document.getElementById('auth-screen').style.display = 'flex';
+    }
+
+    function showApp() {
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('app-screen').style.display = 'block';
+        document.getElementById('header-username').textContent = username || '';
+        loadURLs(); loadStats();
+    }
+
+    function authHeaders() {
+        return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+    }
+
+    async function loadURLs() {
+        const res = await fetch(`${API}/urls`, { headers: authHeaders() });
+        if (res.status === 401) { logout(); return; }
+        const urls = await res.json();
+        renderURLs(Array.isArray(urls) ? urls : []);
+    }
+
+    async function loadStats() {
+        const res = await fetch(`${API}/stats`, { headers: authHeaders() });
+        const data = await res.json();
+        document.getElementById('stat-total').textContent = data.total_urls ?? '—';
+        document.getElementById('stat-clicks').textContent = data.total_clicks ?? '—';
+        document.getElementById('stat-expired').textContent = data.expired_urls ?? '—';
+    }
+
+    async function createURL() {
+        const original = document.getElementById('new-original').value.trim();
+        const code = document.getElementById('new-code').value.trim();
+        const expiresIn = document.getElementById('new-expires').value;
+        if (!original) { toast('Please enter a URL', 'err'); return; }
+        const body = { original_url: original };
+        if (code) body.short_code = code;
+        if (expiresIn) body.expires_in = parseInt(expiresIn);
+        const res = await fetch(`${API}/urls`, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
+        const data = await res.json();
+        if (!res.ok) { toast(data.error || 'Error', 'err'); return; }
+        document.getElementById('new-original').value = '';
+        document.getElementById('new-code').value = '';
+        document.getElementById('new-expires').value = '';
+        toast('URL created!', 'ok');
+        loadURLs(); loadStats();
+    }
+
+    async function deleteURL(id) {
+        if (!confirm('Delete this URL?')) return;
+        await fetch(`${API}/urls/${id}`, { method: 'DELETE', headers: authHeaders() });
+        toast('Deleted', 'ok'); loadURLs(); loadStats();
+    }
+
+    async function deleteAll() {
+        if (!confirm('Delete ALL your URLs?')) return;
+        await fetch(`${API}/urls`, { method: 'DELETE', headers: authHeaders() });
+        toast('All URLs deleted', 'ok'); loadURLs(); loadStats();
+    }
+
+    async function checkAllHealth() {
+        const status = document.getElementById('health-status');
+        status.textContent = 'Checking...';
+        try {
+
+            const res = await fetch(`${API}/urls`, { headers: authHeaders() });
+            const urls = await res.json();
+            if (!Array.isArray(urls)) return;
+
+            for (const u of urls) {
+                await fetch(`${API}/health/${u.ID}`, { headers: authHeaders() });
+            }
+
+            status.textContent = `Checked: ${urls.length}`;
+            loadURLs();
+        } catch(e) { status.textContent = 'Error'; }
+    }
+
+    async function checkOneHealth(id) {
+        try {
+            const res = await fetch(`${API}/health/${id}`, { headers: authHeaders() });
+            const data = await res.json();
+            toast(data.is_alive ? '✓ URL is alive!' : '✕ URL is dead', data.is_alive ? 'ok' : 'err');
+            loadURLs();
+        } catch(e) { toast('Check failed', 'err'); }
+    }
+
+    function renderURLs(urls) {
+        const list = document.getElementById('url-list');
+        if (!urls.length) { list.innerHTML = '<li class="empty-state">No URLs yet. Create your first one!</li>'; return; }
+        const now = new Date();
+        list.innerHTML = urls.map(u => {
+            const shortURL = `${API}/short/${u.short_code}`;
+            const isExpired = u.expires_at && new Date(u.expires_at) < now;
+            const statusClass = isExpired ? 'expired' : (u.is_alive === true ? 'alive' : u.is_alive === false ? 'dead' : 'unknown');
+            const statusText = isExpired ? 'expired' : (u.is_alive === true ? 'alive' : u.is_alive === false ? 'dead' : '—');
+            return `
+            <li class="url-item">
+                <div class="url-original" title="${u.original_url}">${u.original_url}</div>
+                <div class="url-short"><a href="${shortURL}" target="_blank">/short/${u.short_code}</a></div>
+                <div class="url-clicks">🖱 ${u.clicks}</div>
+                <div class="url-status ${statusClass}">${statusText}</div>
+                <div class="url-actions">
+                    <button class="icon-btn health-btn" onclick="checkOneHealth(${u.ID})" title="Check health">🩺</button>
+                    <button class="icon-btn copy" onclick="copyToClipboard('${shortURL}')" title="Copy">⎘</button>
+                    <button class="icon-btn delete" onclick="deleteURL(${u.ID})" title="Delete">✕</button>
+                </div>
+            </li>`;
+        }).join('');
+    }
+
+    function copyToClipboard(text) { navigator.clipboard.writeText(text).then(() => toast('Copied!', 'ok')); }
+    function showMsg(el, text, type) { el.textContent = text; el.className = `msg ${type}`; el.style.display = ''; }
+    let toastTimer;
+    function toast(msg, type = 'ok') {
+        const el = document.getElementById('toast');
+        el.textContent = msg; el.className = `show ${type}`;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.className = '', 2500);
+    }
+</script>
+</body>
+</html>
